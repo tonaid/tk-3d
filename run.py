@@ -6,6 +6,7 @@ class Segment():
     def __init__(self
                 , matrix=np.matrix([])
                 , color=''):
+
         '''
         A Segment is a single component in a Cluster. The verticies in the
         Segments are converted by the rederer into canvas polygon coordinates.
@@ -27,6 +28,7 @@ class Segment():
 
                      format: 'color' | '#<hex color value>'
         '''
+
         self.matrix = matrix
         self.color = color
 
@@ -63,12 +65,14 @@ class Segment():
 class Cluster():
     def __init__(self
                 , segments):
+
         '''
         A Cluster is a group of Segments. It represents an object in the Engine.
 
         Args:
               segments: a list of the Segments in this Cluster
         '''
+
         self.segments = segments
 
 
@@ -76,7 +80,8 @@ class Eye():
     def __init__(self
                 , location=np.matrix([[0.0],[0.0],[69.0]])
                 , canvas_center=[960,840]
-                , scale=500):
+                , scale=1000):
+
         '''
         The Eye is the object that 'sees' the Clusters and translates them into
         canvas coordinates to draw on the screen. The Engine passes an Eye the
@@ -97,6 +102,7 @@ class Eye():
 
               theta: the inital rotation of the eye in radians
         '''
+
         self.location = location
         self.scale = scale
         self.canvas_center = canvas_center
@@ -126,35 +132,35 @@ class Eye():
 
     def adjust_seg(self, seg):
         adjusted_matrix = seg.matrix - self.location
-        adjusted_matrix = np.dot(self.rotation_z(), adjusted_matrix)
-        adjusted_matrix = np.dot(self.rotation_y(), adjusted_matrix)
+        adjusted_matrix = np.dot(self.rotation_z(self.theta_z), adjusted_matrix)
+        adjusted_matrix = np.dot(self.rotation_y(self.theta_y), adjusted_matrix)
         return Segment(adjusted_matrix, seg.color)
 
-    def rotation_z(self):
+    def rotation_z(self, theta):
         return np.matrix([
-                        [math.cos(self.theta_z),math.sin(self.theta_z),0]
-                       ,[-math.sin(self.theta_z),math.cos(self.theta_z),0]
+                        [math.cos(theta),math.sin(theta),0]
+                       ,[-math.sin(theta),math.cos(theta),0]
                        ,[0,0,1]
                     ])
 
-    def rotation_y(self):
+    def rotation_y(self, theta):
         return np.matrix([
-                        [math.cos(self.theta_y),0,-math.sin(self.theta_y)]
+                        [math.cos(theta),0,-math.sin(theta)]
                        ,[0,1,0]
-                       ,[math.sin(self.theta_y),0,math.cos(self.theta_y)]
+                       ,[math.sin(theta),0,math.cos(theta)]
                     ])
 
     def move_left(self):
-        self.location += np.matrix([[0.0],[30.0],[0.0]])
+        self.location += np.dot(self.rotation_z(-(self.theta_z + (math.pi/2.0))), np.matrix([[10],[0.0],[0.0]]))
 
     def move_right(self):
-        self.location += np.matrix([[0.0],[-30.0],[0.0]])
+        self.location += np.dot(self.rotation_z(-(self.theta_z + (math.pi/2.0))), np.matrix([[-10],[0.0],[0.0]]))
 
     def move_forward(self):
-        self.location += np.matrix([[30.0],[0.0],[0.0]])
+        self.location += np.dot(self.rotation_z(-self.theta_z), np.matrix([[10],[0.0],[0.0]]))
 
     def move_back(self):
-        self.location += np.matrix([[-30.0],[0.0],[0.0]])
+        self.location += np.dot(self.rotation_z(-self.theta_z), np.matrix([[-10],[0.0],[0.0]]))
 
     def rotate_right(self):
         self.theta_z += float(math.pi / 100)
@@ -183,6 +189,7 @@ class Eye():
 
 class Engine():
     def __init__(self):
+
         '''
         This is the graphics Engine. It is reposnsible for keeping track of and
         upating the Clusters. It is also reponsible for keeping track of an Eye
@@ -191,6 +198,7 @@ class Engine():
         things.
 
         '''
+
         self.update_delay =  10 #milliseconds
         self.root = Tk()
         self.root.attributes('-fullscreen', True)
@@ -211,7 +219,6 @@ class Engine():
 
     def update(self):
         self.canvas.delete('all')
-        self.canvas.create_text(30,10,text=str([val/30 for val in self.eye.location.ravel().tolist()[0]]))
         for polygon in self.eye.render(self.clusters):
             self.canvas.create_polygon(polygon['coords'], outline='black', fill=polygon['color'])
 
@@ -255,6 +262,7 @@ class Engine():
 
 
 def get_quadrant(point=[]):
+
     '''
     Helper function that figures out what 2d quadrant a point is in
     and return the number
@@ -263,6 +271,7 @@ def get_quadrant(point=[]):
           x: the x coordinate
           y: the y coordinate
     '''
+
     x = point[0]
     y = point[1]
     z = point[2]
@@ -341,6 +350,7 @@ def get_quadrant(point=[]):
 
 
 def make_cube(engine, rootx, rooty, rootz, size):
+
     '''
     Makes a cube in 'engine' at point (rootx,rooty,rootz) with the given size
 
@@ -351,6 +361,7 @@ def make_cube(engine, rootx, rooty, rootz, size):
           rootz: the z coordinate for the center of the cube
           size: the size of an edge on the cube
     '''
+
     size = float(size/2)
 
     seg1 = Segment(np.matrix([
@@ -399,8 +410,8 @@ engine = Engine()
 #            make_cube(engine, x,y,z,9)
 
 make_cube(engine, 0, 0, 0, 2)
-make_cube(engine, 1, 0, 0, 2)
-make_cube(engine, 0, 1, 0, 2)
-make_cube(engine, 0, 0, 1, 2)
+make_cube(engine, 4, 0, 0, 2)
+make_cube(engine, 0, 4, 0, 2)
+make_cube(engine, 0, 0, 4, 2)
 
 engine.run()
