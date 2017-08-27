@@ -40,6 +40,9 @@ class Segment():
         for vect in self.to_vectors():
             yield vect.ravel().tolist()[0]
 
+    def dist(self, point):
+        center = self.center_point()
+        return math.sqrt((center[0]-point[0])**2 + (center[1]-point[1])**2 + (center[2]-point[2])**2)
 
     def center_point(self):
         avg_x = 0
@@ -74,6 +77,10 @@ class Cluster():
         '''
 
         self.segments = segments
+
+    def distance(self):
+        avg = [0,0,0]
+        for seg in self.segments:
 
 
 class Eye():
@@ -123,12 +130,13 @@ class Eye():
             yield {'coords':coords, 'color':seg.color}
 
     def process_clusters(self, clusters):
-        for cluster in clusters:
+        for cluster in sorted(clusters, key=Cluster.distance()):
             for seg in cluster.segments:
                 adjusted_seg = self.adjust_seg(seg)
-                quad = get_quadrant(adjusted_seg.center_point())
-                if quad in [1,4,5,8]:
-                    yield adjusted_seg
+                if adjusted_seg.dist(self.location.ravel().tolist()[0]) > 5:
+                    quad = get_quadrant(adjusted_seg.center_point())
+                    if quad in [1,4,5,8]:
+                        yield adjusted_seg
 
     def adjust_seg(self, seg):
         adjusted_matrix = seg.matrix - self.location
@@ -409,9 +417,9 @@ engine = Engine()
 #        for z in range(60,80,10):
 #            make_cube(engine, x,y,z,9)
 
-make_cube(engine, 0, 0, 0, 2)
-make_cube(engine, 4, 0, 0, 2)
-make_cube(engine, 0, 4, 0, 2)
-make_cube(engine, 0, 0, 4, 2)
+make_cube(engine, 10, 10, 10, 2)
+make_cube(engine, 20, 10, 10, 2)
+make_cube(engine, 10, 20, 10, 2)
+make_cube(engine, 10, 10, 20, 2)
 
 engine.run()
